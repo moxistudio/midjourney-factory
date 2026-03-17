@@ -1,5 +1,11 @@
 # Midjourney Factory
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-1f6feb.svg)](./LICENSE)
+![Status: Early](https://img.shields.io/badge/status-early%20open%20source-f59e0b)
+![Local First](https://img.shields.io/badge/local--first-yes-0f766e)
+![Self Hosted](https://img.shields.io/badge/self--hosted-yes-111827)
+![Stack](https://img.shields.io/badge/stack-Electron%20%7C%20Next.js%20%7C%20Playwright-2563eb)
+
 Midjourney Factory is a local-first creative pipeline for Midjourney / Niji:
 generate prompts with an LLM, review them in a control panel, send batches to
 Discord, and curate the resulting images locally.
@@ -14,6 +20,14 @@ operations.
 
 它适合希望把创作流程系统化的人：不再依赖零散 prompt 文本和手工操作，
 而是把生成、审批、执行、筛选放到同一条可复用流水线上。
+
+Quick links:
+
+- [Highlights](#highlights--项目亮点)
+- [Screenshots](#screenshots--界面截图)
+- [Demo](#demo--演示方式)
+- [Quick Start](#quick-start--快速开始)
+- [Configuration](#configuration)
 
 ## Highlights | 项目亮点
 
@@ -30,6 +44,41 @@ operations.
 - Intended for self-hosted creative workflows
 - Suitable for local experimentation, tooling, and contributor iteration
 - Not affiliated with Midjourney, Discord, or OpenAI
+
+## Screenshots | 界面截图
+
+| Commander Dashboard | Curator |
+| --- | --- |
+| ![Commander Dashboard](./docs/assets/commander-home.png) | ![Curator](./docs/assets/curator-home.png) |
+
+- `Commander` combines prompt generation, review, queueing, factory control, and settings in one dashboard.
+- `Curator` keeps the final step lightweight: quickly keep or discard generated images locally.
+
+## Demo | 演示方式
+
+There is no hosted web demo by design. Midjourney Factory is intended to run
+locally because it deals with local prompts, credentials, browser state, and
+creative output directories.
+
+If you want the fastest hands-on demo, use this flow:
+
+1. Copy `.env.example` to `.env`
+2. Run `./start.sh`
+3. Open the Commander dashboard on the printed local URL
+4. Generate drafts in `Architect`
+5. Review and approve a batch into `output/prompts/`
+6. Start `Factory` to dispatch prompts to Discord
+7. Open `Curator` and keep the best images locally
+
+如果你想快速体验整个流程，最简单的本地演示顺序就是：
+
+1. 复制 `.env.example` 为 `.env`
+2. 运行 `./start.sh`
+3. 打开日志里输出的 Commander 本地地址
+4. 在 `Architect` 里生成草稿
+5. 审核并批准到 `output/prompts/`
+6. 启动 `Factory` 投递到 Discord
+7. 在 `Curator` 中筛选并保留结果图
 
 ## Open Source Basics | 开源信息
 
