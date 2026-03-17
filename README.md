@@ -70,6 +70,10 @@ If you want the fastest hands-on demo, use this flow:
 6. Start `Factory` to dispatch prompts to Discord
 7. Open `Curator` and keep the best images locally
 
+Video script:
+
+- [30-second demo video script](./docs/demo-video-script-30s.md)
+
 如果你想快速体验整个流程，最简单的本地演示顺序就是：
 
 1. 复制 `.env.example` 为 `.env`
