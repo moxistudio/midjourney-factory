@@ -1,0 +1,30 @@
+llm:
+  # 🏆 主力模型：Qwen 3.5 Plus (通过阿里云 DashScope Coding)
+  primary:
+    provider: "openai"
+    base_url: ""  # Set via LLM_PRIMARY_BASE_URL
+    api_key: ""  # Set via LLM_PRIMARY_API_KEY
+    model: "qwen3.5-plus"
+    temperature: 0.7
+
+  # 🛡️ 备用模型：Claude 4.5 Sonnet (智能防抖)
+  # 当 Gemini 响应超时或出错时，系统会自动无缝切换到 Claude
+  fallback:
+    provider: "openai"
+    base_url: ""  # Set via LLM_FALLBACK_BASE_URL
+    api_key: ""  # Set via LLM_FALLBACK_API_KEY
+    model: "claude-sonnet-4-5"
+    temperature: 0.7
+
+midjourney:
+  # 您的 Discord 身份令牌 (请勿泄露给他人)
+  discord_token: ""  # Set via DISCORD_TOKEN
+
+  # 您与 MJ 机器人的私聊频道 ID
+  channel_id: ""  # Set via MJ_CHANNEL_ID
+
+  # 您与 Niji 机器人的私聊频道 ID
+  niji_channel_id: ""  # Set via NIJI_CHANNEL_ID
+
+factory:
+  discord_navigation_timeout_ms: 180000

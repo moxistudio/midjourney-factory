@@ -1,0 +1,22 @@
+{
+  "name": "midjourney-factory-curator",
+  "version": "1.0.0",
+  "description": "Fast image review tool",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "vitest run --globals"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "fs-extra": "^11.1.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.1",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+venv/
+env/
+.venv/
+.uupm/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+
+# Environment
+.env
+.env.local
+.env.*
+!.env.example
+
+# Build artifacts
+dist/
+
+# Output (keep structure, ignore content)
+output/*
+!output/.gitkeep
+!output/prompts/.gitkeep
+!output/prompts_drafts/.gitkeep
+!output/incoming/.gitkeep
+!output/best/.gitkeep
+
+# Browser state (large + sensitive)
+output/browser_state*/
+output/refs_tmp/
+
+# Next.js build
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Local planning notes
+fizzy-roaming-lecun.md

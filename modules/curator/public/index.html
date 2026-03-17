@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curator — Midjourney Factory</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-tertiary: #1a1a1a;
+            --accent-keep: #00ff88;
+            --accent-discard: #ff0055;
+            --accent-skip: #ffaa00;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated grain overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 9999;
+            animation: grain 8s steps(10) infinite;
+        }
+
+        @keyframes grain {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -10%); }
+            20% { transform: translate(-15%, 5%); }
+            30% { transform: translate(7%, -25%); }
+            40% { transform: translate(-5%, 25%); }
+            50% { transform: translate(-15%, 10%); }
+            60% { transform: translate(15%, 0%); }
+            70% { transform: translate(0%, 15%); }
+            80% { transform: translate(3%, 35%); }
+            90% { transform: translate(-10%, 10%); }
+        }
+
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 2rem 3rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--accent-keep), var(--accent-skip), var(--accent-discard));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            animation: gradientShift 6s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .status {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-keep);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Main content */
+        main {
+            flex: 1;
+            padding: 3rem;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Current image section */
+        .current-section {
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .current-label {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        .current-image-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .current-image-container.flash-keep {
+            animation: flashKeep 0.6s ease-out;
+        }
+
+        .current-image-container.flash-discard {
+            animation: flashDiscard 0.6s ease-out;
+        }
+
+        @keyframes flashKeep {
+            0% { border-color: var(--accent-keep); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            50% { border-color: var(--accent-keep); box-shadow: 0 0 0 20px rgba(0, 255, 136, 0); }
+            100% { border-color: var(--border); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
+        @keyframes flashDiscard {
+            0% { border-color: var(--accent-discard); box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); }
+            50% { border-color: var(--accent-discard); box-shadow: 0 0 0 20px rgba(255, 0, 85, 0); }
+            100% { border-color: var(--border); box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); }
+        }
+
+        .current-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+
+        .image-info {
+            padding: 1.5rem;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: center;
+        }
+
+        .btn {
+            font-family: 'JetBrains Mono', monospace;
+            padding: 1rem 2rem;
+            border: 2px solid;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: currentColor;
+            opacity: 0.1;
+            transition: left 0.3s ease;
+        }
+
+        .btn:hover::before {
+            left: 0;
+        }
+
+        .btn-keep {
+            border-color: var(--accent-keep);
+            color: var(--accent-keep);
+        }
+
+        .btn-keep:hover {
+            background: var(--accent-keep);
+            color: var(--bg-primary);
+        }
+
+        .btn-discard {
+            border-color: var(--accent-discard);
+            color: var(--accent-discard);
+        }
+
+        .btn-discard:hover {
+            background: var(--accent-discard);
+            color: var(--bg-primary);
+        }
+
+        .btn-skip {
+            border-color: var(--accent-skip);
+            color: var(--accent-skip);
+        }
+
+        .btn-skip:hover {
+            background: var(--accent-skip);
+            color: var(--bg-primary);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .shortcut {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            margin-left: 0.5rem;
+        }
+
+        /* Upcoming grid */
+        .upcoming-section {
+            margin-top: 4rem;
+        }
+
+        .upcoming-label {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        .upcoming-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .upcoming-item {
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+
+        .upcoming-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-skip);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .upcoming-item:nth-child(1) { animation-delay: 0.05s; }
+        .upcoming-item:nth-child(2) { animation-delay: 0.1s; }
+        .upcoming-item:nth-child(3) { animation-delay: 0.15s; }
+        .upcoming-item:nth-child(4) { animation-delay: 0.2s; }
+        .upcoming-item:nth-child(5) { animation-delay: 0.25s; }
+        .upcoming-item:nth-child(6) { animation-delay: 0.3s; }
+
+        .upcoming-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .upcoming-info {
+            padding: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        /* Loading spinner */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-keep);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            main {
+                padding: 1.5rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .upcoming-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>CURATOR</h1>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span>{{ images.length }} images in queue</span>
+                <span v-if="autoRefresh">• Auto-refresh: 5s</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Loading state -->
+            <div v-if="loading" class="loading">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Empty state -->
+            <div v-else-if="images.length === 0" class="empty-state">
+                <h2>No Images to Curate</h2>
+                <p>Waiting for new Midjourney generations...</p>
+            </div>
+
+            <!-- Current image -->
+            <div v-else class="current-section">
+                <div class="current-label">Current Image</div>
+                <div class="current-image-container" :class="flashClass">
+                    <img :src="currentImage.url" :alt="currentImage.filename" class="current-image">
+                    <div class="image-info">
+                        <strong>{{ currentImage.filename }}</strong>
+                        <div v-if="currentImage.prompt">Prompt: {{ currentImage.prompt }}</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button @click="handleAction('keep')" class="btn btn-keep" :disabled="processing">
+                        ✓ Keep <span class="shortcut">[1 / ↑]</span>
+                    </button>
+                    <button @click="handleAction('discard')" class="btn btn-discard" :disabled="processing">
+                        ✗ Discard <span class="shortcut">[2 / ↓]</span>
+                    </button>
+                    <button @click="skip" class="btn btn-skip" :disabled="processing">
+                        → Skip <span class="shortcut">[→]</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upcoming images -->
+            <div v-if="upcomingImages.length > 0" class="upcoming-section">
+                <div class="upcoming-label">Upcoming ({{ upcomingImages.length }})</div>
+                <div class="upcoming-grid">
+                    <div v-for="(image, index) in upcomingImages" :key="index" class="upcoming-item">
+                        <img :src="image.url" :alt="image.filename" class="upcoming-image">
+                        <div class="upcoming-info">
+                            {{ image.filename }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    images: [],
+                    currentIndex: 0,
+                    loading: true,
+                    processing: false,
+                    flashClass: '',
+                    autoRefresh: true,
+                    refreshInterval: null
+                };
+            },
+            computed: {
+                currentImage() {
+                    return this.images[this.currentIndex] || {};
+                },
+                upcomingImages() {
+                    return this.images.slice(this.currentIndex + 1);
+                }
+            },
+            methods: {
+                async fetchImages() {
+                    try {
+                        const response = await fetch('/api/images');
+                        const data = await response.json();
+                        const raw = Array.isArray(data) ? data : (Array.isArray(data.images) ? data.images : []);
+                        this.images = raw.map((item) => {
+                            if (typeof item === 'string') {
+                                return { filename: item, url: `/images/${encodeURIComponent(item)}` };
+                            }
+                            const filename = item.filename || item.name || '';
+                            const url = item.url || `/images/${encodeURIComponent(filename)}`;
+                            return { filename, url, prompt: item.prompt || '' };
+                        }).filter((item) => item.filename);
+                        if (this.currentIndex >= this.images.length) this.currentIndex = 0;
+                        this.loading = false;
+                    } catch (error) {
+                        console.error('Failed to fetch images:', error);
+                        this.loading = false;
+                    }
+                },
+                async handleAction(action) {
+                    if (this.processing || !this.currentImage.filename) return;
+
+                    this.processing = true;
+
+                    // Visual feedback
+                    this.flashClass = action === 'keep' ? 'flash-keep' : 'flash-discard';
+
+                    try {
+                        await fetch('/api/action', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                action: action,
+                                filename: this.currentImage.filename
+                            })
+                        });
+
+                        // Move to next image
+                        setTimeout(() => {
+                            this.nextImage();
+                            this.flashClass = '';
+                            this.processing = false;
+                        }, 400);
+                    } catch (error) {
+                        console.error('Action failed:', error);
+                        this.flashClass = '';
+                        this.processing = false;
+                    }
+                },
+                skip() {
+                    if (this.processing) return;
+                    this.nextImage();
+                },
+                nextImage() {
+                    if (this.currentIndex < this.images.length - 1) {
+                        this.currentIndex++;
+                    } else {
+                        // Reached end, refresh list
+                        this.currentIndex = 0;
+                        this.fetchImages();
+                    }
+                },
+                handleKeyboard(event) {
+                    if (this.processing || this.images.length === 0) return;
+
+                    switch(event.key) {
+                        case '1':
+                        case 'ArrowUp':
+                            event.preventDefault();
+                            this.handleAction('keep');
+                            break;
+                        case '2':
+                        case 'ArrowDown':
+                            event.preventDefault();
+                            this.handleAction('discard');
+                            break;
+                        case 'ArrowRight':
+                            event.preventDefault();
+                            this.skip();
+                            break;
+                    }
+                },
+                startAutoRefresh() {
+                    this.refreshInterval = setInterval(() => {
+                        // Only refresh if we're at the end or no images
+                        if (this.currentIndex >= this.images.length - 1 || this.images.length === 0) {
+                            this.fetchImages();
+                        }
+                    }, 5000);
+                }
+            },
+            mounted() {
+                this.fetchImages();
+                this.startAutoRefresh();
+                window.addEventListener('keydown', this.handleKeyboard);
+            },
+            beforeUnmount() {
+                window.removeEventListener('keydown', this.handleKeyboard);
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

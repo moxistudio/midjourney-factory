@@ -1,0 +1,80 @@
+{
+  "name": "midjourney-factory-desktop",
+  "version": "1.0.0",
+  "description": "Electron desktop shell for Midjourney Factory",
+  "author": "Viamons",
+  "private": true,
+  "main": "desktop/main.js",
+  "scripts": {
+    "desktop:dev": "electron .",
+    "desktop:build:web": "npm --prefix modules/commander run build",
+    "desktop:icon": "bash scripts/prepare-desktop-icon.sh",
+    "desktop:dist:mac": "bash scripts/desktop-build-mac.sh dir",
+    "desktop:zip:mac": "bash scripts/desktop-build-mac.sh zip"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.viamons.midjourney-factory",
+    "productName": "Midjourney Factory",
+    "asar": false,
+    "files": [
+      "desktop/**/*",
+      "config/**/*",
+      "modules/architect/**/*",
+      "modules/commander/**/*",
+      "modules/curator/**/*",
+      "modules/factory/**/*",
+      "scripts/**/*",
+      "build-assets/**/*",
+      ".env.example",
+      "README.md",
+      "!**/.DS_Store",
+      "!**/__pycache__/**",
+      "!**/.pytest_cache/**",
+      "!**/test/**",
+      "!**/tests/**",
+      "!output/**"
+    ],
+    "extraResources": [
+      {
+        "from": "modules/commander/.next",
+        "to": "app/modules/commander/.next",
+        "filter": [
+          "**/*",
+          "**/.*"
+        ]
+      },
+      {
+        "from": "modules/commander/node_modules",
+        "to": "app/modules/commander/node_modules",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "modules/factory/node_modules",
+        "to": "app/modules/factory/node_modules",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "modules/curator/node_modules",
+        "to": "app/modules/curator/node_modules",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.graphics-design",
+      "target": [
+        "dir",
+        "zip"
+      ]
+    }
+  }
+}
